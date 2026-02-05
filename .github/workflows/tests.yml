@@ -1,0 +1,72 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Check types
+        run: composer types:check
+
+      - name: Check style
+        run: composer style:check
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+        symfony: ['6.4.*', '7.4.*', '8.0.*']
+        exclude:
+          # Symfony 8.0 requires PHP 8.4+
+          - php: '8.2'
+            symfony: '8.0.*'
+          # Symfony 8.0 requires PHP 8.4+
+          - php: '8.3'
+            symfony: '8.0.*'
+
+    name: PHP ${{ matrix.php }} - Symfony ${{ matrix.symfony }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+      - name: Install Symfony version
+        run: |
+          composer require --no-update --dev \
+            symfony/http-client:${{ matrix.symfony }} \
+            symfony/browser-kit:${{ matrix.symfony }} \
+            symfony/framework-bundle:${{ matrix.symfony }} \
+            symfony/http-foundation:${{ matrix.symfony }}
+
+      - name: Install dependencies
+        run: composer update -W --prefer-dist --no-interaction --no-progress
+
+      - name: Run test suite
+        run: composer tests:run -- --coverage-clover=coverage.xml
+
+      -   name: Upload coverage to Codecov
+          uses: codecov/codecov-action@v1
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}

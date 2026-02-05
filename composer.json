@@ -1,0 +1,59 @@
+{
+    "name": "bentools/test-http-client",
+    "description": "Test Symfony applications with HttpClient interface without a real HTTP server",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Beno!t POLASZEK",
+            "email": "bpolaszek@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/http-client": "~6.4 || ~7.0 || ~8.0",
+        "symfony/browser-kit": "~6.4 || ~7.0 || ~8.0",
+        "symfony/framework-bundle": "~6.4 || ~7.0 || ~8.0",
+        "symfony/http-foundation": "~6.4 || ~7.0 || ~8.0"
+    },
+    "require-dev": {
+        "bentools/pest-symfony-kernel": "^1.1",
+        "friendsofphp/php-cs-fixer": "^3.93",
+        "pestphp/pest": "^3.0",
+        "phpstan/phpstan": "^2.1.37",
+        "phpunit/phpunit": "^10.0 || ^11.0",
+        "symfony/yaml": "^6.4 || ^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "BenTools\\TestHttpClient\\": "src/"
+        },
+        "files": [
+            "src/pest-expectations.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BenTools\\TestHttpClient\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "types:check": "vendor/bin/phpstan",
+        "style:check": "vendor/bin/php-cs-fixer check",
+        "style:fix": "vendor/bin/php-cs-fixer fix",
+        "tests:run": "vendor/bin/pest --coverage --min=100",
+        "ci:check": [
+            "@types:check",
+            "@style:check",
+            "@tests:run"
+        ]
+    }
+}
