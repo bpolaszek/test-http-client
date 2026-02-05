@@ -1,0 +1,42 @@
+{
+    "name": "bentools/test-http-client",
+    "description": "Test Symfony applications with HttpClient interface without a real HTTP server",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Beno!t POLASZEK",
+            "email": "bpolaszek@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "symfony/http-client": "^6.4 || ^7.0",
+        "symfony/browser-kit": "^6.4 || ^7.0",
+        "symfony/framework-bundle": "^6.4 || ^7.0",
+        "symfony/http-foundation": "^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "phpunit/phpunit": "^10.0 || ^11.0",
+        "symfony/yaml": "^6.4 || ^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "BenTools\\TestHttpClient\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BenTools\\TestHttpClient\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
