@@ -37,10 +37,11 @@ final class TestHttpClient implements HttpClientInterface
         'extra' => [],
     ];
 
+    /** @var array<string, mixed> */
     private array $defaultOptions = self::API_OPTIONS_DEFAULTS;
 
     /**
-     * @param array $defaultOptions Default options for the requests
+     * @param array<string, mixed> $defaultOptions Default options for the requests
      *
      * @see HttpClientInterface::OPTIONS_DEFAULTS for available options
      */
@@ -57,6 +58,9 @@ final class TestHttpClient implements HttpClientInterface
         return $this->withOptions(['auth_bearer' => $token]);
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function request(string $method, string $url, array $options = []): Response
     {
         $basic = $options['auth_basic'] ?? null;
@@ -73,8 +77,16 @@ final class TestHttpClient implements HttpClientInterface
         }
 
         if ($basic) {
-            $credentials = is_array($basic) ? $basic : explode(':', (string) $basic, 2);
-            $server['PHP_AUTH_USER'] = $credentials[0];
+            if (is_array($basic)) {
+                $credentials = $basic;
+            } elseif (is_string($basic)) {
+                $credentials = explode(':', $basic, 2);
+            } else {
+                // @codeCoverageIgnoreStart
+                $credentials = [];
+                // @codeCoverageIgnoreEnd
+            }
+            $server['PHP_AUTH_USER'] = $credentials[0] ?? '';
             $server['PHP_AUTH_PW'] = $credentials[1] ?? '';
         }
 
@@ -103,6 +115,7 @@ final class TestHttpClient implements HttpClientInterface
     /**
      * Extracts headers depending on the symfony/http-client version being used.
      *
+     * @param array<string, mixed> $options
      * @return array<string, string[]>
      *
      * @codeCoverageIgnore
@@ -110,16 +123,29 @@ final class TestHttpClient implements HttpClientInterface
     private static function extractHeaders(array $options): array
     {
         if (!isset($options['normalized_headers'])) {
-            return $options['headers'];
+            /** @var array<string, string[]> */
+            return $options['headers'] ?? [];
         }
 
         $headers = [];
 
+        $normalizedHeaders = $options['normalized_headers'];
+        if (!is_array($normalizedHeaders)) {
+            return [];
+        }
+
         /** @var string $key */
-        foreach ($options['normalized_headers'] as $key => $values) {
+        foreach ($normalizedHeaders as $key => $values) {
+            if (!is_array($values)) {
+                continue;
+            }
+
             foreach ($values as $value) {
-                [, $value] = explode(': ', (string) $value, 2);
-                $headers[$key][] = $value;
+                if (!is_string($value)) {
+                    continue;
+                }
+                [, $extractedValue] = explode(': ', $value, 2);
+                $headers[$key][] = $extractedValue;
             }
         }
 

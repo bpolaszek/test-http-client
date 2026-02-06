@@ -32,19 +32,19 @@ if (function_exists('expect')) {
 
     expect()->extend('toHaveStatusCode', function (int $expectedStatusCode) {
         /** @var Expectation<mixed> $expectation */
-        $expectation = $this;
+        $expectation = $this; // @phpstan-ignore variable.undefined
 
         $response = $expectation->value;
         if (!$response instanceof ResponseInterface) {
             throw new ExpectationFailedException(sprintf('Expected instance of %s, %s given.', ResponseInterface::class, get_debug_type($response)));
         }
 
-        return $expectation->getStatusCode()->toBe($expectedStatusCode);
+        return $expectation->getStatusCode()->toBe($expectedStatusCode); // @phpstan-ignore method.notFound
     });
 
     expect()->extend('toHaveHeader', function (string $header, ?string $value = null) {
         /** @var Expectation<mixed> $expectation */
-        $expectation = $this;
+        $expectation = $this; // @phpstan-ignore variable.undefined
 
         $response = $expectation->value;
         if (!$response instanceof ResponseInterface) {
@@ -66,7 +66,7 @@ if (function_exists('expect')) {
 
     expect()->extend('toBeSuccessful', function () {
         /** @var Expectation<mixed> $expectation */
-        $expectation = $this;
+        $expectation = $this; // @phpstan-ignore variable.undefined
 
         $response = $expectation->value;
         if (!$response instanceof ResponseInterface) {
@@ -84,7 +84,7 @@ if (function_exists('expect')) {
 
     expect()->extend('toBeClientError', function () {
         /** @var Expectation<mixed> $expectation */
-        $expectation = $this;
+        $expectation = $this; // @phpstan-ignore variable.undefined
 
         $response = $expectation->value;
         if (!$response instanceof ResponseInterface) {
@@ -102,7 +102,7 @@ if (function_exists('expect')) {
 
     expect()->extend('toBeServerError', function () {
         /** @var Expectation<mixed> $expectation */
-        $expectation = $this;
+        $expectation = $this; // @phpstan-ignore variable.undefined
 
         $response = $expectation->value;
         if (!$response instanceof ResponseInterface) {
@@ -120,7 +120,7 @@ if (function_exists('expect')) {
 
     expect()->extend('toHaveJsonStructure', function (?array $keys = null) {
         /** @var Expectation<ResponseInterface> $expectation */
-        $expectation = $this;
+        $expectation = $this; // @phpstan-ignore variable.undefined
 
         $response = $expectation->value;
         if (!$response instanceof ResponseInterface) {

@@ -61,13 +61,23 @@ describe('TestHttpClient', function () {
         expect($data['message'])->toBe('Access granted');
     });
 
-    it('handles basic authentication', function () {
+    it('handles basic authentication with array', function () {
         $client = inject(TestHttpClient::class);
 
         // This test just verifies that auth_basic doesn't throw
         // The actual authentication would need a controller that checks PHP_AUTH_USER
         $params = [
             'auth_basic' => ['user', 'password'],
+        ];
+        expect(fn () => $client->request('GET', '/test', $params))->not->toThrow(Exception::class);
+    });
+
+    it('handles basic authentication with string', function () {
+        $client = inject(TestHttpClient::class);
+
+        // Test with string format "user:password"
+        $params = [
+            'auth_basic' => 'user:password',
         ];
         expect(fn () => $client->request('GET', '/test', $params))->not->toThrow(Exception::class);
     });

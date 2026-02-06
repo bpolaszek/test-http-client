@@ -29,20 +29,38 @@ use IteratorAggregate;
  * Response wrapper that implements ResponseInterface.
  *
  * Wraps Symfony HttpFoundation Response to provide HttpClient's ResponseInterface.
+ *
+ * @implements ArrayAccess<string, mixed>
+ * @implements IteratorAggregate<string, mixed>
  */
 final class Response implements ResponseInterface, ArrayAccess, IteratorAggregate
 {
+    /** @var array<string, list<string>> */
     private readonly array $headers;
+
+    /** @var array<string, mixed> */
     private array $info;
+
     private readonly string $content;
+
+    /** @var array<string, mixed>|null */
     private ?array $jsonData = null;
 
+    /**
+     * @param array<string, mixed> $info
+     */
     public function __construct(
         private readonly HttpFoundationResponse $httpFoundationResponse,
         private readonly BrowserKitResponse $browserKitResponse,
         array $info,
     ) {
-        $this->headers = $httpFoundationResponse->headers->all();
+        $rawHeaders = $httpFoundationResponse->headers->all();
+        /** @var array<string, list<string>> $filteredHeaders */
+        $filteredHeaders = array_map(
+            fn (array $values): array => array_values(array_filter($values, fn ($v): bool => $v !== null)),
+            $rawHeaders
+        );
+        $this->headers = $filteredHeaders;
 
         // Compute raw headers
         $responseHeaders = [];
@@ -98,9 +116,13 @@ final class Response implements ResponseInterface, ArrayAccess, IteratorAggregat
 
     public function getStatusCode(): int
     {
+        /** @var int */
         return $this->info['http_code'];
     }
 
+    /**
+     * @return array<string, list<string>>
+     */
     public function getHeaders(bool $throw = true): array
     {
         if ($throw) {
@@ -110,6 +132,9 @@ final class Response implements ResponseInterface, ArrayAccess, IteratorAggregat
         return $this->headers;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(bool $throw = true): array
     {
         if ('' === $content = $this->getContent($throw)) {
@@ -127,16 +152,17 @@ final class Response implements ResponseInterface, ArrayAccess, IteratorAggregat
         }
 
         try {
-            $content = json_decode($content, true, 512, JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR);
+            $decoded = json_decode($content, true, 512, JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             throw new JsonException($e->getMessage(), $e->getCode());
         }
 
-        if (!is_array($content)) {
-            throw new JsonException(sprintf('JSON content was expected to decode to an array, %s returned.', gettype($content)));
+        if (!is_array($decoded)) {
+            throw new JsonException(sprintf('JSON content was expected to decode to an array, %s returned.', gettype($decoded)));
         }
 
-        return $this->jsonData = $content;
+        /** @var array<string, mixed> $decoded */
+        return $this->jsonData = $decoded;
     }
 
     /**
@@ -165,6 +191,12 @@ final class Response implements ResponseInterface, ArrayAccess, IteratorAggregat
 
     public function offsetExists(mixed $offset): bool
     {
+        // @codeCoverageIgnoreStart
+        if (!is_string($offset)) {
+            return false;
+        }
+        // @codeCoverageIgnoreEnd
+
         if (null === $this->jsonData) {
             $this->toArray();
         }
@@ -174,6 +206,12 @@ final class Response implements ResponseInterface, ArrayAccess, IteratorAggregat
 
     public function offsetGet(mixed $offset): mixed
     {
+        // @codeCoverageIgnoreStart
+        if (!is_string($offset)) {
+            return null;
+        }
+        // @codeCoverageIgnoreEnd
+
         if (null === $this->jsonData) {
             $this->toArray();
         }
