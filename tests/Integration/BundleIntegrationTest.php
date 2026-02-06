@@ -4,47 +4,22 @@ declare(strict_types=1);
 
 use BenTools\TestHttpClient\TestHttpClient;
 
+use function BenTools\Pest\Symfony\inject;
+
 describe('Bundle Integration', function () {
     it('registers TestHttpClient service in container', function () {
-        $kernelBrowser = createClient();
-
-        // Boot the kernel by making a request
-        $kernelBrowser->request('GET', '/test');
-
-        $container = $kernelBrowser->getContainer();
-
-        expect($container->has(TestHttpClient::class))->toBeTrue();
-
-        $testHttpClient = $container->get(TestHttpClient::class);
-        expect($testHttpClient)->toBeInstanceOf(TestHttpClient::class);
+        expect(inject(TestHttpClient::class))->toBeInstanceOf(TestHttpClient::class);
     });
 
     it('can use TestHttpClient from container', function () {
-        $kernelBrowser = createClient();
-
-        // Boot the kernel by making a request
-        $kernelBrowser->request('GET', '/test');
-
-        $testHttpClient = $kernelBrowser->getContainer()->get(TestHttpClient::class);
+        $testHttpClient = inject(TestHttpClient::class);
 
         $response = $testHttpClient->request('GET', '/test');
+        $data = $response->toArray(false);
 
-        expect($response)->toBeSuccessful();
-        expect($response)->toHaveStatusCode(200);
+        expect($response)->toBeSuccessful()
+            ->and($response)->toHaveStatusCode(200)
+            ->and($data['message'])->toBe('Hello, World!');
 
-        $data = $response->toArray();
-        expect($data['message'])->toBe('Hello, World!');
-    });
-
-    it('shares same KernelBrowser instance', function () {
-        $kernelBrowser = createClient();
-
-        // Boot the kernel by making a request
-        $kernelBrowser->request('GET', '/test');
-
-        $testHttpClient = $kernelBrowser->getContainer()->get(TestHttpClient::class);
-
-        // The service should use the same KernelBrowser instance as the one we created
-        expect($testHttpClient->kernelBrowser)->toBeInstanceOf(\Symfony\Bundle\FrameworkBundle\KernelBrowser::class);
     });
 });

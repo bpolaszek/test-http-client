@@ -84,7 +84,7 @@ it('returns users list', function () {
 
     expect($response)
         ->toHaveStatusCode(200)
-        ->toBeJson()
+        ->toHaveJsonStructure()
         ->toHaveHeader('content-type', 'application/json');
 
     $data = $response->toArray();
@@ -278,7 +278,7 @@ it('tests various response aspects', function () {
     expect($response)->toHaveHeader('cache-control', 'max-age=3600');
 
     // JSON
-    expect($response)->toBeJson();
+    expect($response)->toHaveJsonStructure();
 
     // JSON structure
     expect($response)->toHaveJsonStructure(['users', 'total', 'page']);
@@ -292,7 +292,7 @@ it('tests various response aspects', function () {
 - `toBeClientError()` - Assert 4xx status
 - `toBeServerError()` - Assert 5xx status
 - `toHaveHeader(string $name, ?string $value = null)` - Assert header exists (optionally with value)
-- `toBeJson()` - Assert content-type is JSON
+- `toHaveJsonStructure()` - Assert content-type is JSON
 - `toHaveJsonStructure(array $keys)` - Assert JSON contains specific keys
 
 ## Testing External API Calls
@@ -504,7 +504,7 @@ describe('User API', function () {
 
         expect($response)
             ->toHaveStatusCode(201)
-            ->toBeJson()
+            ->toHaveJsonStructure()
             ->toHaveJsonStructure(['id', 'name', 'email', 'createdAt']);
 
         $data = $response->toArray();

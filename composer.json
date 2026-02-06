@@ -17,6 +17,7 @@
         "symfony/http-foundation": "^6.4 || ^7.0"
     },
     "require-dev": {
+        "bentools/pest-symfony-kernel": "^1.1",
         "pestphp/pest": "^3.0",
         "phpunit/phpunit": "^10.0 || ^11.0",
         "symfony/yaml": "^6.4 || ^7.0"

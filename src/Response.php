@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace BenTools\TestHttpClient;
 
+use ArrayAccess;
+use LogicException;
 use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\Exception\JsonException;
@@ -12,6 +14,8 @@ use Symfony\Component\HttpClient\Exception\ServerException;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpFoundation\Response as HttpFoundationResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
+
+use Traversable;
 
 use function gettype;
 use function is_array;
@@ -25,7 +29,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Wraps Symfony HttpFoundation Response to provide HttpClient's ResponseInterface.
  */
-final class Response implements ResponseInterface
+final class Response implements ResponseInterface, ArrayAccess, \IteratorAggregate
 {
     private readonly array $headers;
     private array $info;
@@ -156,5 +160,38 @@ final class Response implements ResponseInterface
     public function cancel(): void
     {
         $this->info['error'] = 'Response has been canceled.';
+    }
+
+    public function offsetExists(mixed $offset): bool
+    {
+        if (null === $this->jsonData) {
+            $this->toArray();
+        }
+
+        return isset($this->jsonData[$offset]);
+    }
+
+    public function offsetGet(mixed $offset): mixed
+    {
+        if (null === $this->jsonData) {
+            $this->toArray();
+        }
+
+        return $this->jsonData[$offset] ?? null;
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        throw new LogicException("This method is read-only.");
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        throw new LogicException("This method is read-only.");
+    }
+
+    public function getIterator(): Traversable
+    {
+        yield from $this->toArray();
     }
 }

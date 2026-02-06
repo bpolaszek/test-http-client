@@ -5,35 +5,42 @@ declare(strict_types=1);
 use BenTools\TestHttpClient\TestHttpClient;
 use BenTools\TestHttpClient\Response;
 
+use Symfony\Component\BrowserKit\CookieJar;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
+use Symfony\Component\HttpKernel\KernelInterface;
+
+use function BenTools\Pest\Symfony\inject;
+
 describe('TestHttpClient', function () {
     it('creates client with default options', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
 
         expect($client)->toBeInstanceOf(TestHttpClient::class);
     });
 
     it('makes GET request', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
         $response = $client->request('GET', '/test');
 
-        expect($response)->toBeInstanceOf(Response::class);
-        expect($response)->toHaveStatusCode(200);
+        expect($response)->toBeInstanceOf(Response::class)
+            ->and($response)->toHaveStatusCode(200);
     });
 
     it('makes POST request with JSON', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
         $response = $client->request('POST', '/json', [
             'json' => ['name' => 'John', 'age' => 30],
         ]);
 
         expect($response)->toHaveStatusCode(201);
         $data = $response->toArray();
-        expect($data)->toHaveKey('received');
-        expect($data['received'])->toBe(['name' => 'John', 'age' => 30]);
+        expect($data)->toHaveKey('received')
+            ->and($data['received'])->toBe(['name' => 'John', 'age' => 30]);
     });
 
     it('sends custom headers', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
         $response = $client->request('GET', '/headers', [
             'headers' => ['X-Custom-Header' => 'test-value'],
         ]);
@@ -44,7 +51,7 @@ describe('TestHttpClient', function () {
     });
 
     it('handles bearer authentication', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
         $response = $client->request('GET', '/protected', [
             'auth_bearer' => 'valid-token',
         ]);
@@ -55,60 +62,61 @@ describe('TestHttpClient', function () {
     });
 
     it('handles basic authentication', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
 
         // This test just verifies that auth_basic doesn't throw
         // The actual authentication would need a controller that checks PHP_AUTH_USER
-        expect(fn () => $client->request('GET', '/test', [
+        $params = [
             'auth_basic' => ['user', 'password'],
-        ]))->not->toThrow(Exception::class);
+        ];
+        expect(fn () => $client->request('GET', '/test', $params))->not->toThrow(Exception::class);
     });
 
     it('returns response with headers', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
         $response = $client->request('GET', '/headers');
 
-        expect($response)->toHaveHeader('x-response-header', 'custom-value');
-        expect($response)->toHaveHeader('cache-control');
+        expect($response)->toHaveHeader('x-response-header', 'custom-value')
+            ->and($response)->toHaveHeader('cache-control');
     });
 
     it('provides access to container', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
         // Make a request first to boot the kernel
         $client->request('GET', '/test');
 
         $container = $client->kernelBrowser->getContainer();
-        expect($container)->toBeInstanceOf(\Symfony\Component\DependencyInjection\ContainerInterface::class);
+        expect($container)->toBeInstanceOf(ContainerInterface::class);
     });
 
     it('provides access to cookie jar', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
 
         $cookieJar = $client->kernelBrowser->getCookieJar();
-        expect($cookieJar)->toBeInstanceOf(\Symfony\Component\BrowserKit\CookieJar::class);
+        expect($cookieJar)->toBeInstanceOf(CookieJar::class);
     });
 
     it('provides access to kernel', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
 
         $kernel = $client->kernelBrowser->getKernel();
-        expect($kernel)->toBeInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class);
+        expect($kernel)->toBeInstanceOf(KernelInterface::class);
     });
 
     it('can disable reboot', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
 
         expect(fn () => $client->kernelBrowser->disableReboot())->not->toThrow(Exception::class);
     });
 
     it('can enable reboot', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
 
         expect(fn () => $client->kernelBrowser->enableReboot())->not->toThrow(Exception::class);
     });
 
     it('throws on stream method', function () {
-        $client = new TestHttpClient(createClient());
+        $client = inject(TestHttpClient::class);
         $response = $client->request('GET', '/test');
 
         expect(fn () => $client->stream($response))->toThrow(LogicException::class);

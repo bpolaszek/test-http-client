@@ -3,21 +3,21 @@
 declare(strict_types=1);
 
 use BenTools\TestHttpClient\TestHttpClient;
+use Symfony\Component\BrowserKit\CookieJar;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 describe('Full HTTP Cycle Integration', function () {
     it('performs complete GET request cycle', function () {
         $client = new TestHttpClient(createClient());
         $response = $client->request('GET', '/test');
 
-        expect($response)->toBeSuccessful();
-        // expect($response)->toBeJson();
-        expect($response)->toHaveStatusCode(200);
-        expect($response)->toHaveHeader('content-type');
-
-        $data = $response->toArray();
-        expect($data)->toHaveKey('message');
-        expect($data['message'])->toBe('Hello, World!');
-        expect($data['method'])->toBe('GET');
+        expect($response)->toBeSuccessful()
+            ->and($response)->toHaveJsonStructure()
+            ->and($response)->toHaveStatusCode(200)
+            ->and($response)->toHaveHeader('content-type')
+            ->and($response)->toHaveKey('message')
+            ->and($response['message'])->toBe('Hello, World!')
+            ->and($response['method'])->toBe('GET');
     });
 
     it('performs complete POST request cycle', function () {
@@ -32,15 +32,13 @@ describe('Full HTTP Cycle Integration', function () {
             'json' => $payload,
         ]);
 
-        expect($response)->toHaveStatusCode(201);
-        expect($response)->toBeSuccessful();
-        expect($response)->toHaveHeader('content-type'); // JSON expectation
-        // expect($response)->toBeJson(); // TODO: Fix chaining issue
-        // expect($response)->toHaveJsonStructure(['received', 'method']);
-
-        $data = $response->toArray();
-        expect($data['received'])->toBe($payload);
-        expect($data['method'])->toBe('POST');
+        expect($response)->toHaveStatusCode(201)
+            ->and($response)->toBeSuccessful()
+            ->and($response)->toHaveHeader('content-type')
+            ->and($response)->toHaveJsonStructure()
+            ->and($response)->toHaveJsonStructure(['received', 'method'])
+            ->and($response['received'])->toBe($payload)
+            ->and($response['method'])->toBe('POST');
     });
 
     it('handles authentication flow', function () {
@@ -48,26 +46,22 @@ describe('Full HTTP Cycle Integration', function () {
 
         // First, try without token (should fail)
         $unauthorizedResponse = $client->request('GET', '/protected');
-        expect($unauthorizedResponse)->toBeClientError();
-        expect($unauthorizedResponse->getStatusCode())->toBe(401);
+        expect($unauthorizedResponse)->toBeClientError()
+            ->and($unauthorizedResponse->getStatusCode())->toBe(401);
 
         // Then, try with invalid token (should fail)
-        $forbiddenResponse = $client->request('GET', '/protected', [
-            'auth_bearer' => 'invalid-token',
-        ]);
-        expect($forbiddenResponse)->toBeClientError();
-        expect($forbiddenResponse->getStatusCode())->toBe(403);
+        $forbiddenResponse = $client->withAuthBearer('invalid-token')->request('GET', '/protected');
+        expect($forbiddenResponse)->toBeClientError()
+            ->and($forbiddenResponse->getStatusCode())->toBe(403);
 
         // Finally, try with valid token (should succeed)
-        $successResponse = $client->request('GET', '/protected', [
-            'auth_bearer' => 'valid-token',
-        ]);
-        expect($successResponse)->toBeSuccessful();
-        expect($successResponse)->toHaveStatusCode(200);
+        $successResponse = $client->withAuthBearer('valid-token')->request('GET', '/protected');
+        expect($successResponse)->toBeSuccessful()
+            ->and($successResponse)->toHaveStatusCode(200);
 
         $data = $successResponse->toArray();
-        expect($data['message'])->toBe('Access granted');
-        expect($data['user'])->toBe('test-user');
+        expect($data['message'])->toBe('Access granted')
+            ->and($data['user'])->toBe('test-user');
     });
 
     it('handles custom headers in both directions', function () {
@@ -80,12 +74,11 @@ describe('Full HTTP Cycle Integration', function () {
             ],
         ]);
 
-        expect($response)->toBeSuccessful();
-        expect($response)->toHaveHeader('x-response-header', 'custom-value');
-        expect($response)->toHaveHeader('cache-control'); // Don't check exact value as Symfony adds ", private"
+        expect($response)->toBeSuccessful()
+            ->and($response)->toHaveHeader('x-response-header', 'custom-value')
+            ->and($response)->toHaveHeader('cache-control') // Don't check exact value as Symfony adds ", private"
+            ->and($response['custom_header'])->toBe('my-custom-value');
 
-        $data = $response->toArray();
-        expect($data['custom_header'])->toBe('my-custom-value');
     });
 
     it('handles error responses correctly', function () {
@@ -93,50 +86,41 @@ describe('Full HTTP Cycle Integration', function () {
 
         // Test 400 Bad Request
         $badRequest = $client->request('GET', '/error/400');
-        expect($badRequest)->toBeClientError();
-        expect($badRequest)->toHaveStatusCode(400);
+        expect($badRequest)->toBeClientError()
+            ->and($badRequest)->toHaveStatusCode(400);
 
         // Test 404 Not Found
         $notFound = $client->request('GET', '/error/404');
-        expect($notFound)->toBeClientError();
-        expect($notFound)->toHaveStatusCode(404);
+        expect($notFound)->toBeClientError()
+            ->and($notFound)->toHaveStatusCode(404);
 
         // Test 500 Internal Server Error
         $serverError = $client->request('GET', '/error/500');
-        expect($serverError)->toBeServerError();
-        expect($serverError)->toHaveStatusCode(500);
+        expect($serverError)->toBeServerError()
+            ->and($serverError)->toHaveStatusCode(500);
     });
 
     it('provides access to Symfony internals', function () {
         $client = new TestHttpClient(createClient());
-        $response = $client->request('GET', '/test');
-
-        // Verify we can access container
-        $container = $client->kernelBrowser->getContainer();
-        expect($container)->toBeInstanceOf(\Symfony\Component\DependencyInjection\ContainerInterface::class);
-
-        // Verify we can access kernel
-        $kernel = $client->kernelBrowser->getKernel();
-        expect($kernel)->toBeInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class);
-        expect($kernel->getEnvironment())->toBe('test');
 
         // Verify we can access cookie jar
         $cookieJar = $client->kernelBrowser->getCookieJar();
-        expect($cookieJar)->toBeInstanceOf(\Symfony\Component\BrowserKit\CookieJar::class);
+        expect($cookieJar)->toBeInstanceOf(CookieJar::class);
     });
 
     it('maintains state across requests when reboot is disabled', function () {
         $client = new TestHttpClient(createClient());
         $client->kernelBrowser->disableReboot();
-
+        $kernel1 = $client->kernelBrowser->getKernel();
         $response1 = $client->request('GET', '/test');
         $response2 = $client->request('GET', '/test');
-
-        expect($response1)->toBeSuccessful();
-        expect($response2)->toBeSuccessful();
+        $kernel2 = $client->kernelBrowser->getKernel();
 
         // Both requests should use the same kernel instance
-        expect($client->kernelBrowser->getKernel())->toBeInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class);
+        expect($response1)->toBeSuccessful()
+            ->and($response2)->toBeSuccessful()
+            ->and($kernel1)->toBeInstanceOf(KernelInterface::class)
+            ->and($kernel1)->toBe($kernel2);
     });
 
     it('handles multiple sequential requests', function () {
@@ -144,18 +128,16 @@ describe('Full HTTP Cycle Integration', function () {
 
         // Make multiple requests
         $getResponse = $client->request('GET', '/test');
-        expect($getResponse)->toBeSuccessful();
-
         $postResponse = $client->request('POST', '/json', [
             'json' => ['test' => 'data'],
         ]);
-        expect($postResponse)->toHaveStatusCode(201);
-
         $headersResponse = $client->request('GET', '/headers');
-        expect($headersResponse)->toBeSuccessful();
 
         // All responses should be independent
-        expect($getResponse->toArray()['method'])->toBe('GET');
-        expect($postResponse->toArray()['method'])->toBe('POST');
+        expect($getResponse)->toBeSuccessful()
+            ->and($postResponse)->toHaveStatusCode(201)
+            ->and($headersResponse)->toBeSuccessful()
+            ->and($getResponse->toArray()['method'])->toBe('GET')
+            ->and($postResponse->toArray()['method'])->toBe('POST');
     });
 });

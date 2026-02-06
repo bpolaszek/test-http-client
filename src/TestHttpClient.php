@@ -52,7 +52,12 @@ final class TestHttpClient implements HttpClientInterface
         }
     }
 
-    public function request(string $method, string $url, array $options = []): ResponseInterface
+    public function withAuthBearer(?string $token): self
+    {
+        return $this->withOptions(['auth_bearer' => $token]);
+    }
+
+    public function request(string $method, string $url, array $options = []): Response
     {
         $basic = $options['auth_basic'] ?? null;
         [$url, $options] = self::prepareRequest($method, $url, $options, $this->defaultOptions);
@@ -92,7 +97,7 @@ final class TestHttpClient implements HttpClientInterface
 
     public function stream(ResponseInterface|iterable $responses, ?float $timeout = null): ResponseStreamInterface
     {
-        throw new LogicException('Not implemented yet');
+        throw new LogicException('Not implemented.');
     }
 
     /**

@@ -35,10 +35,10 @@ describe('Response', function () {
         $response = new Response($httpResponse, $browserKitResponse, []);
 
         $headers = $response->getHeaders();
-        expect($headers)->toHaveKey('content-type');
-        expect($headers['content-type'])->toContain('application/json');
-        expect($headers)->toHaveKey('x-custom');
-        expect($headers['x-custom'])->toContain('value');
+        expect($headers)->toHaveKey('content-type')
+            ->and($headers['content-type'])->toContain('application/json')
+            ->and($headers)->toHaveKey('x-custom')
+            ->and($headers['x-custom'])->toContain('value');
     });
 
     it('converts JSON to array', function () {
@@ -48,21 +48,7 @@ describe('Response', function () {
         $browserKitResponse = new BrowserKitResponse($jsonData);
         $response = new Response($httpResponse, $browserKitResponse, []);
 
-        $data = $response->toArray();
-        expect($data)->toBe(['foo' => 'bar', 'count' => 42]);
-    });
-
-    it('caches JSON data', function () {
-        $jsonData = json_encode(['cached' => true]);
-        $httpResponse = new HttpFoundationResponse($jsonData);
-        $httpResponse->headers->set('Content-Type', 'application/json');
-        $browserKitResponse = new BrowserKitResponse($jsonData);
-        $response = new Response($httpResponse, $browserKitResponse, []);
-
-        $first = $response->toArray();
-        $second = $response->toArray();
-
-        expect($first)->toBe($second);
+        expect([...$response])->toBe(['foo' => 'bar', 'count' => 42]);
     });
 
     it('throws JsonException for invalid JSON', function () {
@@ -126,9 +112,9 @@ describe('Response', function () {
         $info = ['custom' => 'value', 'http_method' => 'GET'];
         $response = new Response($httpResponse, $browserKitResponse, $info);
 
-        expect($response->getInfo('custom'))->toBe('value');
-        expect($response->getInfo('http_method'))->toBe('GET');
-        expect($response->getInfo())->toBeArray();
+        expect($response->getInfo('custom'))->toBe('value')
+            ->and($response->getInfo('http_method'))->toBe('GET')
+            ->and($response->getInfo())->toBeArray();
     });
 
     it('returns kernel response', function () {

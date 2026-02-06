@@ -26,7 +26,7 @@ if (function_exists('expect')) {
      *   expect($response)->toHaveStatusCode(200);
      *   expect($response)->toHaveHeader('content-type', 'application/json');
      *   expect($response)->toBeSuccessful();
-     *   expect($response)->toBeJson();
+     *   expect($response)->toHaveJsonStructure();
      */
 
     expect()->extend('toHaveStatusCode', function (int $expectedStatusCode) {
@@ -117,7 +117,7 @@ if (function_exists('expect')) {
         return true;
     });
 
-    expect()->extend('toBeJson', function () {
+    expect()->extend('toHaveJsonStructure', function (?array $keys = null) {
         /** @var Expectation<ResponseInterface> $expectation */
         $expectation = $this;
 
@@ -125,6 +125,7 @@ if (function_exists('expect')) {
         if (!$response instanceof ResponseInterface) {
             throw new ExpectationFailedException(sprintf('Expected instance of %s, %s given.', ResponseInterface::class, get_debug_type($response)));
         }
+
 
         $headers = $response->getHeaders(false);
         $contentType = '';
@@ -137,26 +138,15 @@ if (function_exists('expect')) {
             throw new ExpectationFailedException(sprintf('Expected JSON content-type, got "%s"', $contentType));
         }
 
-        return true;
-    });
+        if (null !== $keys) {
+            $data = $response->toArray(false);
 
-    expect()->extend('toHaveJsonStructure', function (array $keys) {
-        /** @var Expectation<ResponseInterface> $expectation */
-        $expectation = $this;
-
-        $response = $expectation->value;
-        if (!$response instanceof ResponseInterface) {
-            throw new ExpectationFailedException(sprintf('Expected instance of %s, %s given.', ResponseInterface::class, get_debug_type($response)));
-        }
-
-        $data = $response->toArray(false);
-
-        foreach ($keys as $key) {
-            if (!array_key_exists($key, $data)) {
-                throw new ExpectationFailedException(sprintf('Expected JSON to have key "%s"', $key));
+            foreach ($keys as $key) {
+                if (!array_key_exists($key, $data)) {
+                    throw new ExpectationFailedException(sprintf('Expected JSON to have key "%s"', $key));
+                }
             }
         }
-
 
         return true;
     });
