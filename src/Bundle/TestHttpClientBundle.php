@@ -8,6 +8,9 @@ use BenTools\TestHttpClient\DependencyInjection\TestHttpClientExtension;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
+/**
+ * @codeCoverageIgnore
+ */
 final class TestHttpClientBundle extends Bundle
 {
     public function getContainerExtension(): ?ExtensionInterface

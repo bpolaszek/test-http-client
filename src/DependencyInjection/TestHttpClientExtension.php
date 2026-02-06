@@ -11,6 +11,9 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
 
+/**
+ * @codeCoverageIgnore
+ */
 final class TestHttpClientExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void

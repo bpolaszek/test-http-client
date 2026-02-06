@@ -1,8 +1,8 @@
 # BenTools Test HTTP Client
 
-[![Tests](https://github.com/bpolaszek/test-http-client/workflows/Tests/badge.svg)](https://github.com/bpolaszek/test-http-client/actions)
 [![Latest Stable Version](https://poser.pugx.org/bentools/test-http-client/v/stable)](https://packagist.org/packages/bentools/test-http-client)
-[![License](https://poser.pugx.org/bentools/test-http-client/license)](https://packagist.org/packages/bentools/test-http-client)
+[![CI Workflow](https://github.com/bpolaszek/test-http-client/actions/workflows/ci.yml/badge.svg)](https://github.com/bpolaszek/test-http-client/actions/workflows/ci.yml)
+[![Code Coverage](https://codecov.io/gh/bpolaszek/test-http-client/graph/badge.svg?token=vUOBeSJwGC)](https://codecov.io/gh/bpolaszek/test-http-client)
 
 Test Symfony applications with `HttpClientInterface` without a real HTTP server.
 
@@ -388,7 +388,7 @@ use BenTools\TestHttpClient\TestHttpClient;
 
 class ApiTest extends WebTestCase
 {
-    protected function createHttpClient(): TestHttpClient
+    protected function createbackend(): TestHttpClient
     {
         return new TestHttpClient(static::createClient());
     }
@@ -400,7 +400,7 @@ For Pest, add this to `tests/Pest.php`:
 ```php
 use BenTools\TestHttpClient\TestHttpClient;
 
-function httpClient(): TestHttpClient
+function backend(): TestHttpClient
 {
     return new TestHttpClient(createClient());
 }
@@ -410,7 +410,7 @@ Then use it in tests:
 
 ```php
 it('works', function () {
-    $response = httpClient()->request('GET', '/api/test');
+    $response = backend()->request('GET', '/api/test');
     expect($response)->toBeSuccessful();
 });
 ```
@@ -452,32 +452,6 @@ it('works', function () {
 
 ## Troubleshooting
 
-### Data Pollution Between Requests
-
-**Problem:** You make multiple requests in a test, but data from the first request doesn't persist (sessions, database changes, service state, etc.).
-
-**Example of the issue:**
-```php
-it('persists data across requests', function () {
-    $client = new TestHttpClient(createClient());
-
-    // First request: create a user
-    $response1 = $client->request('POST', '/api/users', [
-        'json' => ['name' => 'John'],
-    ]);
-    expect($response1)->toHaveStatusCode(201);
-    $userId = $response1->toArray()['id'];
-
-    // Second request: should find the user
-    $response2 = $client->request('GET', "/api/users/{$userId}");
-    expect($response2)->toHaveStatusCode(200); // ❌ Fails with 404!
-});
-```
-
-**Solution:** Use `TestKernelTrait` in your test kernel (see Configuration section above).
-
-**Why this happens:** Symfony's default behavior is to reset certain services between requests to prevent state leaking. This is good in production but can cause issues in tests where you expect state to persist.
-
 ### Risky Tests Warning
 
 If you see warnings like "Test code or tested code did not remove its own exception handlers", this is normal with Symfony kernels in tests. These warnings are harmless and can be disabled in `phpunit.xml`:
@@ -493,9 +467,7 @@ If you see warnings like "Test code or tested code did not remove its own except
 ```php
 describe('User API', function () {
     it('creates a user', function () {
-        $client = httpClient();
-
-        $response = $client->request('POST', '/api/users', [
+        $response = backend()->request('POST', '/api/users', [
             'json' => [
                 'name' => 'Alice',
                 'email' => 'alice@example.com',
@@ -504,38 +476,32 @@ describe('User API', function () {
 
         expect($response)
             ->toHaveStatusCode(201)
-            ->toHaveJsonStructure()
+            ->toHaveJsonStructure() // <-- No arguments, just checks Content-Type header
             ->toHaveJsonStructure(['id', 'name', 'email', 'createdAt']);
 
-        $data = $response->toArray();
-        expect($data['name'])->toBe('Alice');
+        expect($response['name'])->toBe('Alice');
 
         // Verify in database
-        $repository = $client->getContainer()->get(UserRepository::class);
+        $repository = backend()->getContainer()->get(UserRepository::class);
         $user = $repository->find($data['id']);
         expect($user)->not->toBeNull();
         expect($user->getEmail())->toBe('alice@example.com');
     });
 
     it('validates user input', function () {
-        $client = httpClient();
-
-        $response = $client->request('POST', '/api/users', [
+        $response = backend()->request('POST', '/api/users', [
             'json' => ['name' => ''], // Invalid: empty name
         ]);
 
         expect($response)
-            ->toHaveStatusCode(400)
-            ->toBeClientError();
+            ->toBeClientError()
+            ->toHaveStatusCode(400);
 
-        $data = $response->toArray(false);
-        expect($data)->toHaveKey('errors');
+        expect($response)->toHaveKey('errors');
     });
 
     it('requires authentication', function () {
-        $client = httpClient();
-
-        $response = $client->request('DELETE', '/api/users/1');
+        $response = backend()->request('DELETE', '/api/users/1');
 
         expect($response)->toHaveStatusCode(401);
 
@@ -549,56 +515,10 @@ describe('User API', function () {
 });
 ```
 
-### Testing with Database Transactions
-
-```php
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-
-class UserApiTest extends KernelTestCase
-{
-    private TestHttpClient $client;
-
-    protected function setUp(): void
-    {
-        $this->client = new TestHttpClient(static::createClient());
-
-        // Start transaction
-        $em = $this->client->getContainer()->get('doctrine')->getManager();
-        $em->beginTransaction();
-    }
-
-    protected function tearDown(): void
-    {
-        // Rollback transaction
-        $em = $this->client->getContainer()->get('doctrine')->getManager();
-        $em->rollback();
-    }
-
-    public function testCreateUser(): void
-    {
-        $response = $this->client->request('POST', '/api/users', [
-            'json' => ['name' => 'Test User'],
-        ]);
-
-        $this->assertSame(201, $response->getStatusCode());
-        // Changes will be rolled back in tearDown
-    }
-}
-```
-
 ## Credits
 
-Inspired by [Prism](https://github.com/bpolaszek/prism) by [Benoît Polaszek](https://github.com/bpolaszek).
+Borrowed and adapted from Api-Platform's [TestClient](https://github.com/api-platform/core/blob/main/src/Symfony/Bundle/Test/Client.php).
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/bpolaszek/test-http-client/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/bpolaszek/test-http-client/discussions)
+MIT.

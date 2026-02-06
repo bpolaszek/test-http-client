@@ -6,6 +6,7 @@ use BenTools\TestHttpClient\TestHttpClient;
 
 use function BenTools\Pest\Symfony\inject;
 
+
 describe('Bundle Integration', function () {
     it('registers TestHttpClient service in container', function () {
         expect(inject(TestHttpClient::class))->toBeInstanceOf(TestHttpClient::class);
