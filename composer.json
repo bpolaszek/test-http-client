@@ -11,10 +11,10 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/http-client": "^6.4 || ^7.0",
-        "symfony/browser-kit": "^6.4 || ^7.0",
-        "symfony/framework-bundle": "^6.4 || ^7.0",
-        "symfony/http-foundation": "^6.4 || ^7.0"
+        "symfony/http-client": "~6.4 || ~7.0 || ~8.0",
+        "symfony/browser-kit": "~6.4 || ~7.0 || ~8.0",
+        "symfony/framework-bundle": "~6.4 || ~7.0 || ~8.0",
+        "symfony/http-foundation": "~6.4 || ~7.0 || ~8.0"
     },
     "require-dev": {
         "bentools/pest-symfony-kernel": "^1.1",
