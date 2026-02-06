@@ -17,6 +17,7 @@ use function sprintf;
 use function str_contains;
 use function strtolower;
 
+// @codeCoverageIgnoreStart
 if (function_exists('expect')) {
 
     /**
@@ -151,3 +152,4 @@ if (function_exists('expect')) {
         return true;
     });
 }
+// @codeCoverageIgnoreEnd

@@ -6,6 +6,7 @@ use BenTools\TestHttpClient\Response;
 use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\Exception\JsonException;
+use Symfony\Component\HttpClient\Exception\RedirectionException;
 use Symfony\Component\HttpClient\Exception\ServerException;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpFoundation\Response as HttpFoundationResponse;
@@ -141,5 +142,86 @@ describe('Response', function () {
         $response->cancel();
 
         expect($response->getInfo('error'))->toBe('Response has been canceled.');
+    });
+
+    it('throws RedirectionException for 3xx status', function () {
+        $httpResponse = new HttpFoundationResponse('', 301);
+        $browserKitResponse = new BrowserKitResponse('');
+        $response = new Response($httpResponse, $browserKitResponse, []);
+
+        expect(fn () => $response->getContent())->toThrow(RedirectionException::class);
+    });
+
+    it('caches JSON data', function () {
+        $jsonData = json_encode(['foo' => 'bar']);
+        $httpResponse = new HttpFoundationResponse($jsonData);
+        $httpResponse->headers->set('Content-Type', 'application/json');
+        $browserKitResponse = new BrowserKitResponse($jsonData);
+        $response = new Response($httpResponse, $browserKitResponse, []);
+
+        // First call - decodes JSON
+        $data1 = $response->toArray();
+        // Second call - uses cache
+        $data2 = $response->toArray();
+
+        expect($data1)->toBe($data2)
+            ->and($data1)->toBe(['foo' => 'bar']);
+    });
+
+    it('throws JsonException when JSON decodes to non-array', function () {
+        $jsonData = json_encode('string value');
+        $httpResponse = new HttpFoundationResponse($jsonData);
+        $httpResponse->headers->set('Content-Type', 'application/json');
+        $browserKitResponse = new BrowserKitResponse($jsonData);
+        $response = new Response($httpResponse, $browserKitResponse, []);
+
+        expect(fn () => $response->toArray())->toThrow(JsonException::class);
+    });
+
+    it('supports ArrayAccess offsetExists', function () {
+        $jsonData = json_encode(['foo' => 'bar', 'baz' => null]);
+        $httpResponse = new HttpFoundationResponse($jsonData);
+        $httpResponse->headers->set('Content-Type', 'application/json');
+        $browserKitResponse = new BrowserKitResponse($jsonData);
+        $response = new Response($httpResponse, $browserKitResponse, []);
+
+        expect(isset($response['foo']))->toBeTrue()
+            ->and(isset($response['missing']))->toBeFalse();
+    });
+
+    it('supports ArrayAccess offsetGet', function () {
+        $jsonData = json_encode(['foo' => 'bar']);
+        $httpResponse = new HttpFoundationResponse($jsonData);
+        $httpResponse->headers->set('Content-Type', 'application/json');
+        $browserKitResponse = new BrowserKitResponse($jsonData);
+        $response = new Response($httpResponse, $browserKitResponse, []);
+
+        expect($response['foo'])->toBe('bar')
+            ->and($response['missing'])->toBeNull();
+    });
+
+    it('throws LogicException on offsetSet', function () {
+        $jsonData = json_encode(['foo' => 'bar']);
+        $httpResponse = new HttpFoundationResponse($jsonData);
+        $httpResponse->headers->set('Content-Type', 'application/json');
+        $browserKitResponse = new BrowserKitResponse($jsonData);
+        $response = new Response($httpResponse, $browserKitResponse, []);
+
+        expect(fn () => $response['foo'] = 'new value')->toThrow(LogicException::class);
+    });
+
+    it('throws LogicException on offsetUnset', function () {
+        $jsonData = json_encode(['foo' => 'bar']);
+        $httpResponse = new HttpFoundationResponse($jsonData);
+        $httpResponse->headers->set('Content-Type', 'application/json');
+        $browserKitResponse = new BrowserKitResponse($jsonData);
+        $response = new Response($httpResponse, $browserKitResponse, []);
+
+        try {
+            unset($response['foo']);
+            expect(false)->toBeTrue('Expected LogicException to be thrown');
+        } catch (LogicException $e) {
+            expect($e)->toBeInstanceOf(LogicException::class);
+        }
     });
 });

@@ -104,6 +104,8 @@ final class TestHttpClient implements HttpClientInterface
      * Extracts headers depending on the symfony/http-client version being used.
      *
      * @return array<string, string[]>
+     *
+     * @codeCoverageIgnore
      */
     private static function extractHeaders(array $options): array
     {
