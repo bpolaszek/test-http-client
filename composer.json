@@ -18,7 +18,9 @@
     },
     "require-dev": {
         "bentools/pest-symfony-kernel": "^1.1",
+        "friendsofphp/php-cs-fixer": "^3.93",
         "pestphp/pest": "^3.0",
+        "phpstan/phpstan": "^2.1.37",
         "phpunit/phpunit": "^10.0 || ^11.0",
         "symfony/yaml": "^6.4 || ^7.0"
     },
@@ -42,5 +44,16 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "scripts": {
+        "types:check": "vendor/bin/phpstan",
+        "style:check": "vendor/bin/php-cs-fixer check",
+        "style:fix": "vendor/bin/php-cs-fixer fix",
+        "tests:run": "vendor/bin/pest --coverage --min=100",
+        "ci:check": [
+            "@types:check",
+            "@style:check",
+            "@tests:run"
+        ]
+    }
 }

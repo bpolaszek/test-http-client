@@ -23,13 +23,14 @@ use function sprintf;
 
 use const JSON_BIGINT_AS_STRING;
 use const JSON_THROW_ON_ERROR;
+use IteratorAggregate;
 
 /**
  * Response wrapper that implements ResponseInterface.
  *
  * Wraps Symfony HttpFoundation Response to provide HttpClient's ResponseInterface.
  */
-final class Response implements ResponseInterface, ArrayAccess, \IteratorAggregate
+final class Response implements ResponseInterface, ArrayAccess, IteratorAggregate
 {
     private readonly array $headers;
     private array $info;
