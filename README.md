@@ -23,6 +23,54 @@ This package provides a test implementation of Symfony's `HttpClientInterface` t
 composer require --dev bentools/test-http-client
 ```
 
+## Symfony Bundle Integration
+
+For Symfony applications, you can register the bundle to automatically wire the `TestHttpClient` service:
+
+### 1. Register the Bundle
+
+Add the bundle to your `config/bundles.php` (only in test environment):
+
+```php
+// config/bundles.php
+return [
+    // ... other bundles
+    BenTools\TestHttpClient\Bundle\TestHttpClientBundle::class => ['test' => true],
+];
+```
+
+### 2. Use the Service
+
+Once registered, the `TestHttpClient` service is automatically available in your test environment:
+
+```php
+use BenTools\TestHttpClient\TestHttpClient;
+
+class ApiTest extends WebTestCase
+{
+    public function testUsersList(): void
+    {
+        $client = static::getContainer()->get(TestHttpClient::class);
+        $response = $client->request('GET', '/api/users');
+
+        $this->assertSame(200, $response->getStatusCode());
+    }
+}
+```
+
+For Pest tests:
+
+```php
+it('returns users list', function () {
+    $client = container()->get(TestHttpClient::class);
+    $response = $client->request('GET', '/api/users');
+
+    expect($response)->toHaveStatusCode(200);
+});
+```
+
+> **Note:** If you prefer to instantiate `TestHttpClient` manually without registering the bundle, you can still do so as shown in the Quick Start section below.
+
 ## Quick Start
 
 ### With Pest
@@ -299,7 +347,40 @@ framework:
 
 ### Creating a Test Client
 
-In your test setup, create a `KernelBrowser` instance:
+#### Option 1: Using the Bundle (Recommended)
+
+If you registered the bundle as described in the [Symfony Bundle Integration](#symfony-bundle-integration) section, the service is automatically available:
+
+```php
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use BenTools\TestHttpClient\TestHttpClient;
+
+class ApiTest extends WebTestCase
+{
+    public function testApi(): void
+    {
+        $client = static::getContainer()->get(TestHttpClient::class);
+        $response = $client->request('GET', '/api/test');
+
+        $this->assertSame(200, $response->getStatusCode());
+    }
+}
+```
+
+For Pest:
+
+```php
+it('works', function () {
+    $client = container()->get(TestHttpClient::class);
+    $response = $client->request('GET', '/api/test');
+
+    expect($response)->toBeSuccessful();
+});
+```
+
+#### Option 2: Manual Instantiation
+
+Alternatively, you can manually create a `TestHttpClient` instance:
 
 ```php
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BenTools\TestHttpClient\Tests\Fixtures;
 
+use BenTools\TestHttpClient\Bundle\TestHttpClientBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -19,6 +20,7 @@ class TestKernel extends BaseKernel
     {
         return [
             new FrameworkBundle(),
+            new TestHttpClientBundle(),
         ];
     }
 
