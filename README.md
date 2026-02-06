@@ -191,7 +191,7 @@ By default, Symfony reboots the kernel between requests. For better performance 
 
 ```php
 $client = new TestHttpClient($kernelBrowser);
-$client->disableReboot();
+$client->kernelBrowser->disableReboot();
 
 // Make multiple requests - kernel stays booted
 $response1 = $client->request('GET', '/api/users');
@@ -283,28 +283,6 @@ expect($response)->toBeSuccessful();
 ```
 
 ## Configuration
-
-### Preventing Service Pollution Between Tests
-
-**IMPORTANT:** By default, Symfony resets certain services between requests to avoid state pollution. In test environments, this can cause issues where data doesn't persist between requests as expected.
-
-To fix this, use the provided `TestKernelTrait` in your test kernel:
-
-```php
-use BenTools\TestHttpClient\TestKernelTrait;
-use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
-use Symfony\Component\HttpKernel\Kernel as BaseKernel;
-
-class TestKernel extends BaseKernel
-{
-    use MicroKernelTrait;
-    use TestKernelTrait; // ← Add this trait
-
-    // ... rest of your kernel configuration
-}
-```
-
-The trait overrides the `handle()` method to disable service resetting in test environments, preventing data pollution between test requests.
 
 ### Framework Configuration
 

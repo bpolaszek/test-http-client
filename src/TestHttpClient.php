@@ -6,25 +6,19 @@ namespace BenTools\TestHttpClient;
 
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Component\BrowserKit\CookieJar;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpClient\HttpClientTrait;
-use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\HttpKernel\Profiler\Profile;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Contracts\HttpClient\ResponseStreamInterface;
 
+use function explode;
+use function implode;
 use function in_array;
 use function is_array;
 use function sprintf;
+use function str_replace;
+use function strtoupper;
 
-/**
- * HTTP Client for testing Symfony applications without a real HTTP server.
- *
- * This client implements HttpClientInterface by wrapping KernelBrowser,
- * allowing you to test your HTTP endpoints as if you were making real HTTP requests.
- */
 final class TestHttpClient implements HttpClientInterface
 {
     use HttpClientTrait;
@@ -32,7 +26,7 @@ final class TestHttpClient implements HttpClientInterface
     /**
      * @see HttpClientInterface::OPTIONS_DEFAULTS
      */
-    public const array API_OPTIONS_DEFAULTS = [
+    public const API_OPTIONS_DEFAULTS = [
         'auth_basic' => null,
         'auth_bearer' => null,
         'query' => [],
@@ -46,27 +40,16 @@ final class TestHttpClient implements HttpClientInterface
     private array $defaultOptions = self::API_OPTIONS_DEFAULTS;
 
     /**
-     * @param KernelBrowser $kernelBrowser Symfony's test client
      * @param array $defaultOptions Default options for the requests
      *
      * @see HttpClientInterface::OPTIONS_DEFAULTS for available options
      */
-    public function __construct(private readonly KernelBrowser $kernelBrowser, array $defaultOptions = [])
+    public function __construct(public readonly KernelBrowser $kernelBrowser, array $defaultOptions = [])
     {
         $kernelBrowser->followRedirects(false);
         if ($defaultOptions) {
-            $this->setDefaultOptions($defaultOptions);
+            [, $this->defaultOptions] = self::prepareRequest(null, null, $defaultOptions, self::API_OPTIONS_DEFAULTS);
         }
-    }
-
-    /**
-     * Sets the default options for the requests.
-     *
-     * @see HttpClientInterface::OPTIONS_DEFAULTS for available options
-     */
-    public function setDefaultOptions(array $defaultOptions): void
-    {
-        [, $this->defaultOptions] = self::prepareRequest(null, null, $defaultOptions, self::API_OPTIONS_DEFAULTS);
     }
 
     public function request(string $method, string $url, array $options = []): ResponseInterface
@@ -109,82 +92,7 @@ final class TestHttpClient implements HttpClientInterface
 
     public function stream(ResponseInterface|iterable $responses, ?float $timeout = null): ResponseStreamInterface
     {
-        throw new LogicException('Streaming is not supported by TestHttpClient');
-    }
-
-    /**
-     * Gets the underlying test client.
-     *
-     * @internal
-     */
-    public function getKernelBrowser(): KernelBrowser
-    {
-        return $this->kernelBrowser;
-    }
-
-    // The following methods are proxy methods for KernelBrowser's ones
-
-    /**
-     * Returns the container.
-     */
-    public function getContainer(): ContainerInterface
-    {
-        return $this->kernelBrowser->getContainer();
-    }
-
-    /**
-     * Returns the CookieJar instance.
-     */
-    public function getCookieJar(): CookieJar
-    {
-        return $this->kernelBrowser->getCookieJar();
-    }
-
-    /**
-     * Returns the kernel.
-     */
-    public function getKernel(): KernelInterface
-    {
-        return $this->kernelBrowser->getKernel();
-    }
-
-    /**
-     * Gets the profile associated with the current Response.
-     *
-     * @return Profile|false A Profile instance
-     */
-    public function getProfile(): Profile|false
-    {
-        return $this->kernelBrowser->getProfile();
-    }
-
-    /**
-     * Enables the profiler for the very next request.
-     *
-     * If the profiler is not enabled, the call to this method does nothing.
-     */
-    public function enableProfiler(): void
-    {
-        $this->kernelBrowser->enableProfiler();
-    }
-
-    /**
-     * Disables kernel reboot between requests.
-     *
-     * By default, the Client reboots the Kernel for each request. This method
-     * allows to keep the same kernel across requests.
-     */
-    public function disableReboot(): void
-    {
-        $this->kernelBrowser->disableReboot();
-    }
-
-    /**
-     * Enables kernel reboot between requests.
-     */
-    public function enableReboot(): void
-    {
-        $this->kernelBrowser->enableReboot();
+        throw new LogicException('Not implemented yet');
     }
 
     /**

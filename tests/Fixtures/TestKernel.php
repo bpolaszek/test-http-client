@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace BenTools\TestHttpClient\Tests\Fixtures;
 
-use BenTools\TestHttpClient\TestKernelTrait;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -15,7 +14,6 @@ use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 class TestKernel extends BaseKernel
 {
     use MicroKernelTrait;
-    use TestKernelTrait;
 
     public function registerBundles(): array
     {

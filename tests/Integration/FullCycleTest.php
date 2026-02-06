@@ -112,22 +112,22 @@ describe('Full HTTP Cycle Integration', function () {
         $response = $client->request('GET', '/test');
 
         // Verify we can access container
-        $container = $client->getContainer();
+        $container = $client->kernelBrowser->getContainer();
         expect($container)->toBeInstanceOf(\Symfony\Component\DependencyInjection\ContainerInterface::class);
 
         // Verify we can access kernel
-        $kernel = $client->getKernel();
+        $kernel = $client->kernelBrowser->getKernel();
         expect($kernel)->toBeInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class);
         expect($kernel->getEnvironment())->toBe('test');
 
         // Verify we can access cookie jar
-        $cookieJar = $client->getCookieJar();
+        $cookieJar = $client->kernelBrowser->getCookieJar();
         expect($cookieJar)->toBeInstanceOf(\Symfony\Component\BrowserKit\CookieJar::class);
     });
 
     it('maintains state across requests when reboot is disabled', function () {
         $client = new TestHttpClient(createClient());
-        $client->disableReboot();
+        $client->kernelBrowser->disableReboot();
 
         $response1 = $client->request('GET', '/test');
         $response2 = $client->request('GET', '/test');
@@ -136,7 +136,7 @@ describe('Full HTTP Cycle Integration', function () {
         expect($response2)->toBeSuccessful();
 
         // Both requests should use the same kernel instance
-        expect($client->getKernel())->toBeInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class);
+        expect($client->kernelBrowser->getKernel())->toBeInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class);
     });
 
     it('handles multiple sequential requests', function () {

@@ -77,34 +77,34 @@ describe('TestHttpClient', function () {
         // Make a request first to boot the kernel
         $client->request('GET', '/test');
 
-        $container = $client->getContainer();
+        $container = $client->kernelBrowser->getContainer();
         expect($container)->toBeInstanceOf(\Symfony\Component\DependencyInjection\ContainerInterface::class);
     });
 
     it('provides access to cookie jar', function () {
         $client = new TestHttpClient(createClient());
 
-        $cookieJar = $client->getCookieJar();
+        $cookieJar = $client->kernelBrowser->getCookieJar();
         expect($cookieJar)->toBeInstanceOf(\Symfony\Component\BrowserKit\CookieJar::class);
     });
 
     it('provides access to kernel', function () {
         $client = new TestHttpClient(createClient());
 
-        $kernel = $client->getKernel();
+        $kernel = $client->kernelBrowser->getKernel();
         expect($kernel)->toBeInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class);
     });
 
     it('can disable reboot', function () {
         $client = new TestHttpClient(createClient());
 
-        expect(fn () => $client->disableReboot())->not->toThrow(Exception::class);
+        expect(fn () => $client->kernelBrowser->disableReboot())->not->toThrow(Exception::class);
     });
 
     it('can enable reboot', function () {
         $client = new TestHttpClient(createClient());
 
-        expect(fn () => $client->enableReboot())->not->toThrow(Exception::class);
+        expect(fn () => $client->kernelBrowser->enableReboot())->not->toThrow(Exception::class);
     });
 
     it('throws on stream method', function () {
