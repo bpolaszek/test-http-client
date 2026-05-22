@@ -132,6 +132,73 @@ describe('TestHttpClient', function () {
         expect(fn () => $client->stream($response))->toThrow(LogicException::class);
     });
 
+    it('makes GET request through shortcut', function () {
+        $client = inject(TestHttpClient::class);
+        $response = $client->get('/echo-method');
+
+        expect($response)->toBeInstanceOf(Response::class)
+            ->and($response)->toHaveStatusCode(200);
+        expect($response->toArray()['method'])->toBe('GET');
+    });
+
+    it('makes POST request through shortcut', function () {
+        $client = inject(TestHttpClient::class);
+        $response = $client->post('/echo-method', [
+            'json' => ['hello' => 'world'],
+        ]);
+
+        expect($response)->toBeInstanceOf(Response::class)
+            ->and($response)->toHaveStatusCode(200);
+        $data = $response->toArray();
+        expect($data['method'])->toBe('POST')
+            ->and($data['body'])->toBe('{"hello":"world"}');
+    });
+
+    it('makes PATCH request through shortcut', function () {
+        $client = inject(TestHttpClient::class);
+        $response = $client->patch('/echo-method', [
+            'json' => ['field' => 'updated'],
+        ]);
+
+        expect($response)->toBeInstanceOf(Response::class)
+            ->and($response)->toHaveStatusCode(200);
+        $data = $response->toArray();
+        expect($data['method'])->toBe('PATCH')
+            ->and($data['body'])->toBe('{"field":"updated"}');
+    });
+
+    it('makes PUT request through shortcut', function () {
+        $client = inject(TestHttpClient::class);
+        $response = $client->put('/echo-method', [
+            'json' => ['replaced' => true],
+        ]);
+
+        expect($response)->toBeInstanceOf(Response::class)
+            ->and($response)->toHaveStatusCode(200);
+        $data = $response->toArray();
+        expect($data['method'])->toBe('PUT')
+            ->and($data['body'])->toBe('{"replaced":true}');
+    });
+
+    it('makes DELETE request through shortcut', function () {
+        $client = inject(TestHttpClient::class);
+        $response = $client->delete('/echo-method');
+
+        expect($response)->toBeInstanceOf(Response::class)
+            ->and($response)->toHaveStatusCode(200);
+        expect($response->toArray()['method'])->toBe('DELETE');
+    });
+
+    it('forwards options through shortcut methods', function () {
+        $client = inject(TestHttpClient::class);
+        $response = $client->get('/headers', [
+            'headers' => ['X-Custom-Header' => 'via-get-shortcut'],
+        ]);
+
+        expect($response)->toHaveStatusCode(200);
+        expect($response->toArray()['custom_header'])->toBe('via-get-shortcut');
+    });
+
     it('sets default options', function () {
         $client = new TestHttpClient(createClient(), [
             'headers' => ['X-Custom-Header' => 'default-value'],

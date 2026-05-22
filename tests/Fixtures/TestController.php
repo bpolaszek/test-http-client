@@ -77,6 +77,17 @@ final readonly class TestController
     }
 
     /**
+     * Endpoint echoing back the HTTP method used.
+     */
+    public function echoMethod(Request $request): JsonResponse
+    {
+        return new JsonResponse([
+            'method' => $request->getMethod(),
+            'body' => $request->getContent(),
+        ]);
+    }
+
+    /**
      * Endpoint returning specific HTTP error codes.
      */
     public function error(int $code): JsonResponse

@@ -113,6 +113,46 @@ final class TestHttpClient implements HttpClientInterface
     }
 
     /**
+     * @param array<string, mixed> $options
+     */
+    public function get(string $url, array $options = []): ResponseInterface
+    {
+        return $this->request('GET', $url, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function post(string $url, array $options = []): ResponseInterface
+    {
+        return $this->request('POST', $url, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function patch(string $url, array $options = []): ResponseInterface
+    {
+        return $this->request('PATCH', $url, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function put(string $url, array $options = []): ResponseInterface
+    {
+        return $this->request('PUT', $url, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function delete(string $url, array $options = []): ResponseInterface
+    {
+        return $this->request('DELETE', $url, $options);
+    }
+
+    /**
      * Extracts headers depending on the symfony/http-client version being used.
      *
      * @param array<string, mixed> $options
