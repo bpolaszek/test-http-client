@@ -81,5 +81,9 @@ class TestKernel extends BaseKernel
         $routes->add('test_error', '/error/{code}')
             ->controller([TestController::class, 'error'])
             ->methods(['GET']);
+
+        $routes->add('test_echo_method', '/echo-method')
+            ->controller([TestController::class, 'echoMethod'])
+            ->methods(['GET', 'POST', 'PATCH', 'PUT', 'DELETE']);
     }
 }
