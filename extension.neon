@@ -1,0 +1,5 @@
+services:
+    -
+        class: BenTools\TestHttpClient\PHPStan\PestExpectationsClassReflectionExtension
+        tags:
+            - phpstan.broker.methodsClassReflectionExtension

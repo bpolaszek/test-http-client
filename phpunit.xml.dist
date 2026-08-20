@@ -22,5 +22,10 @@
         <include>
             <directory>src</directory>
         </include>
+        <exclude>
+            <!-- Instantiated by PHPStan itself, not by the test runner.
+                 Behavior is covered by tests/Unit/PestExpectationsPHPStanExtensionTest.php. -->
+            <directory>src/PHPStan</directory>
+        </exclude>
     </source>
 </phpunit>
