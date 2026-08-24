@@ -246,6 +246,20 @@ it('tests various response aspects', function () {
 - `toHaveJsonStructure()` - Assert content-type is JSON
 - `toHaveJsonStructure(array $keys)` - Assert JSON contains specific keys
 
+### PHPStan
+
+Custom Pest expectations are registered at runtime by `expect()->extend()`, so PHPStan cannot discover them
+on its own and reports `Call to an undefined method Pest\Expectation<...>::toHaveStatusCode()`.
+
+This package ships a PHPStan extension that declares them. If you use
+[`phpstan/extension-installer`](https://github.com/phpstan/extension-installer), it is enabled automatically.
+Otherwise, include it manually in your `phpstan.neon`:
+
+```neon
+includes:
+    - vendor/bentools/test-http-client/extension.neon
+```
+
 ## Credits
 
 Borrowed and adapted from Api-Platform's [TestClient](https://github.com/api-platform/core/blob/main/src/Symfony/Bundle/Test/Client.php).
